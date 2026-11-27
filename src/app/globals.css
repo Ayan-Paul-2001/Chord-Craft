@@ -1,0 +1,564 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-plus-jakarta), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: var(--font-cormorant), Georgia, "Times New Roman", serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+:root {
+  color-scheme: dark;
+  --font-plus-jakarta: "Plus Jakarta Sans";
+  --font-cormorant: "Cormorant Garamond";
+  --font-jetbrains: "JetBrains Mono";
+  --font-playfair: "Playfair Display";
+  --font-cinzel: "Cinzel";
+  --font-great-vibes: "Great Vibes";
+  --font-lora: "Lora";
+  --font-space-grotesk: "Space Grotesk";
+  --background: #0a0a0c;
+  --surface: #131318;
+  --surface-elevated: #1b1b22;
+  --foreground: #f4f4f6;
+  --card: #141419;
+  --card-foreground: #f4f4f6;
+  --popover: #1b1b22;
+  --popover-foreground: #f4f4f6;
+  --primary: #e8b349;
+  --primary-strong: #f59e0b;
+  --primary-foreground: #0a0a0c;
+  --secondary: #22222b;
+  --secondary-foreground: #f4f4f6;
+  --muted: #22222b;
+  --muted-foreground: #9a9aa8;
+  --accent: #f59e0b;
+  --accent-foreground: #0a0a0c;
+  --destructive: #ef4444;
+  --destructive-foreground: #f4f4f6;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(245, 158, 11, 0.36);
+  --input: #1c1c23;
+  --ring: #f59e0b;
+  --radius: 0.875rem;
+  --ease-luxury: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Prevent horizontal layout shift and horizontal overflow while preserving position: sticky */
+html {
+  scrollbar-gutter: stable;
+  overflow-x: clip;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Force dark color scheme on all form controls */
+input, select, textarea, button {
+  color-scheme: dark;
+}
+
+/* Accessible Luxury Focus Ring */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid rgba(251, 191, 36, 0.78);
+  outline-offset: 2px;
+}
+
+/* Dark theme autofill overrides */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+select:-webkit-autofill,
+textarea:-webkit-autofill {
+  -webkit-text-fill-color: #f4f4f6 !important;
+  box-shadow: 0 0 0px 1000px #0c0c10 inset !important;
+  -webkit-box-shadow: 0 0 0px 1000px #0c0c10 inset !important;
+  transition: background-color 5000000s ease-in-out 0s;
+  caret-color: #f4f4f6 !important;
+}
+
+/* Date picker indicator */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.85) brightness(1.15);
+  cursor: pointer;
+  opacity: 0.75;
+  transition: opacity 0.2s ease;
+}
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+body {
+  background-color: var(--background);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(245, 158, 11, 0.07), transparent 65%),
+    radial-gradient(ellipse 60% 40% at 100% 20%, rgba(217, 119, 6, 0.04), transparent 60%);
+  background-attachment: fixed;
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-feature-settings: "kern" 1, "liga" 1, "cv02" 1, "cv03" 1;
+  text-rendering: optimizeLegibility;
+  overflow-x: clip;
+  min-width: 0;
+}
+
+/* Mobile & tablet Safari/Android fixes: avoid fixed-background scroll jank and enable smooth momentum scroll on tables */
+@media (max-width: 1023px) {
+  body {
+    background-attachment: scroll;
+  }
+}
+
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ==========================================================================
+   UI/UX Pro Max — Editorial Typography & Luxury Surface Primitives
+   ========================================================================== */
+
+.font-display {
+  font-family: var(--font-display);
+  font-feature-settings: "liga" 1, "dlig" 1, "kern" 1;
+}
+
+.editorial-heading {
+  font-family: var(--font-display);
+  text-wrap: balance;
+  letter-spacing: -0.02em;
+}
+
+.brand-wordmark {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.025em;
+}
+
+/* Curated Stylish CMS Typography Classes */
+.cms-font-cormorant {
+  font-family: var(--font-cormorant), Georgia, serif;
+}
+
+.cms-font-playfair {
+  font-family: var(--font-playfair), Georgia, serif;
+}
+
+.cms-font-cinzel {
+  font-family: var(--font-cinzel), Georgia, serif;
+  letter-spacing: 0.035em;
+}
+
+.cms-font-great-vibes {
+  font-family: var(--font-great-vibes), cursive;
+  font-weight: 400 !important;
+  letter-spacing: 0.015em;
+}
+
+.cms-font-lora {
+  font-family: var(--font-lora), Georgia, serif;
+}
+
+.cms-font-jakarta {
+  font-family: var(--font-plus-jakarta), ui-sans-serif, system-ui, sans-serif;
+}
+
+.cms-font-grotesk {
+  font-family: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+}
+
+.cms-font-mono {
+  font-family: var(--font-jetbrains), ui-monospace, monospace;
+}
+
+h1, h2, h3 {
+  text-wrap: balance;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Smoked-Glass Dark Luxury Panel */
+.luxury-glass {
+  background: linear-gradient(180deg, rgba(24, 24, 30, 0.78) 0%, rgba(15, 15, 19, 0.86) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 24px 48px -18px rgba(0, 0, 0, 0.72);
+}
+
+/* Interactive Dark Luxury Card with Weighted Lift & Champagne Edge Reveal */
+.luxury-card {
+  position: relative;
+  background: linear-gradient(165deg, rgba(24, 24, 31, 0.86) 0%, rgba(14, 14, 18, 0.94) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.065),
+    0 16px 36px -16px rgba(0, 0, 0, 0.7);
+  transition:
+    transform 320ms var(--ease-luxury),
+    border-color 320ms var(--ease-luxury),
+    box-shadow 320ms var(--ease-luxury),
+    background 320ms var(--ease-luxury);
+}
+
+.luxury-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(245, 158, 11, 0.34);
+  box-shadow:
+    inset 0 1px 0 rgba(253, 230, 138, 0.14),
+    0 24px 48px -16px rgba(0, 0, 0, 0.85),
+    0 0 32px -12px rgba(245, 158, 11, 0.16);
+}
+
+/* Champagne Gold Tactile Primary CTA */
+.luxury-btn-primary {
+  background: linear-gradient(135deg, #fde68a 0%, #f59e0b 48%, #d97706 100%);
+  color: #09090b;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    0 12px 28px -8px rgba(245, 158, 11, 0.38);
+  transition:
+    transform 240ms var(--ease-luxury),
+    box-shadow 240ms var(--ease-luxury),
+    filter 240ms var(--ease-luxury);
+}
+
+.luxury-btn-primary:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    0 18px 36px -8px rgba(245, 158, 11, 0.5);
+}
+
+.luxury-btn-primary:active {
+  transform: scale(0.98);
+}
+
+/* Frosted Obsidian Secondary CTA */
+.luxury-btn-ghost {
+  background: rgba(24, 24, 31, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  transition:
+    transform 240ms var(--ease-luxury),
+    border-color 240ms var(--ease-luxury),
+    background-color 240ms var(--ease-luxury);
+}
+
+.luxury-btn-ghost:hover {
+  background: rgba(34, 34, 44, 0.9);
+  border-color: rgba(245, 158, 11, 0.4);
+  transform: translateY(-1px);
+}
+
+.luxury-btn-ghost:active {
+  transform: scale(0.98);
+}
+
+/* Eyebrow Conservatory Badge */
+.eyebrow-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.45rem;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0.375rem 0.875rem;
+  border-radius: 9999px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.24);
+  color: #fcd34d;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: left;
+  box-shadow: inset 0 1px 0 rgba(253, 230, 138, 0.12);
+}
+
+.eyebrow-pill svg {
+  flex-shrink: 0;
+}
+
+@media (max-width: 639px) {
+  .eyebrow-pill {
+    gap: 0.375rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 0.75rem;
+    font-size: 0.625rem;
+    letter-spacing: 0.07em;
+    text-align: left;
+  }
+}
+
+/* Subtle Architectural Guitar String Background Grid */
+.acoustic-strings-bg {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    radial-gradient(rgba(245, 158, 11, 0.06) 1px, transparent 1px);
+  background-size: 96px 100%, 28px 28px;
+}
+
+.subtle-fret-bg {
+  background-image: radial-gradient(rgba(245, 158, 11, 0.065) 1px, transparent 1px);
+  background-size: 26px 26px;
+}
+
+/* Champagne Hairline Section Divider */
+.section-hairline {
+  height: 1px;
+  width: 100%;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.07) 20%, rgba(245, 158, 11, 0.28) 50%, rgba(255, 255, 255, 0.07) 80%, transparent 100%);
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0a0c;
+}
+::-webkit-scrollbar-thumb {
+  background: #272730;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f4e;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Subtle ambient glow effects */
+.gold-glow {
+  box-shadow: 0 0 28px -6px rgba(245, 158, 11, 0.26);
+}
+
+.gold-border-glow {
+  border-color: rgba(245, 158, 11, 0.36);
+  box-shadow:
+    inset 0 1px 0 rgba(253, 230, 138, 0.14),
+    0 20px 50px -18px rgba(245, 158, 11, 0.18),
+    0 20px 44px -18px rgba(0, 0, 0, 0.8);
+}
+
+/* Smooth Motion Primitives
+   Use animation-fill-mode: backwards + transform: none at end so animated
+   containers never leave behind a transform containing block that traps
+   position: fixed modals. */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes scaleUp {
+  from { opacity: 0; transform: scale(0.96) translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes portalEnter {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes staggerReveal {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes marquee-reverse {
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.38s var(--ease-luxury) backwards;
+}
+
+.animate-scale-up {
+  animation: scaleUp 0.3s var(--ease-luxury) backwards;
+}
+
+.animate-portal-enter {
+  animation: portalEnter 0.38s var(--ease-luxury) backwards;
+}
+
+.animate-stagger {
+  animation: staggerReveal 0.44s var(--ease-luxury) backwards;
+}
+
+/* ==========================================================================
+   UI/UX Pro Max — Admin & Student Portal Conservatory Design System
+   ========================================================================== */
+
+.portal-canvas {
+  background-color: #08080b;
+  background-image:
+    radial-gradient(ellipse 65% 42% at 80% -8%, rgba(245, 158, 11, 0.065), transparent 62%),
+    radial-gradient(ellipse 50% 35% at 10% 100%, rgba(168, 85, 247, 0.035), transparent 60%);
+}
+
+.portal-surface {
+  background: linear-gradient(168deg, rgba(22, 22, 29, 0.9) 0%, rgba(12, 12, 16, 0.96) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.065),
+    0 20px 44px -20px rgba(0, 0, 0, 0.8);
+  transition:
+    border-color 280ms var(--ease-luxury),
+    box-shadow 280ms var(--ease-luxury);
+}
+
+.portal-surface:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.portal-kpi-card {
+  position: relative;
+  background: linear-gradient(165deg, rgba(24, 24, 31, 0.88) 0%, rgba(13, 13, 17, 0.96) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 16px 36px -18px rgba(0, 0, 0, 0.78);
+  transition:
+    transform 300ms var(--ease-luxury),
+    border-color 300ms var(--ease-luxury),
+    box-shadow 300ms var(--ease-luxury);
+}
+
+.portal-kpi-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(245, 158, 11, 0.38);
+  box-shadow:
+    inset 0 1px 0 rgba(253, 230, 138, 0.16),
+    0 22px 44px -18px rgba(0, 0, 0, 0.85),
+    0 0 32px -12px rgba(245, 158, 11, 0.18);
+}
+
+.portal-heading {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+
+.portal-kpi-num {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+/* Unified Luxury Field Polish across Admin & Student Management Workspaces */
+.portal-workspace input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]),
+.portal-workspace select,
+.portal-workspace textarea {
+  transition:
+    border-color 200ms var(--ease-luxury),
+    background-color 200ms var(--ease-luxury),
+    box-shadow 200ms var(--ease-luxury);
+}
+
+.portal-workspace input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]):not(:disabled):hover,
+.portal-workspace select:not(:disabled):hover,
+.portal-workspace textarea:not(:disabled):hover {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.portal-workspace input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]):focus,
+.portal-workspace select:focus,
+.portal-workspace textarea:focus {
+  border-color: rgba(245, 158, 11, 0.65);
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.14);
+  outline: none;
+}
+
+.portal-workspace table tbody tr {
+  transition: background-color 180ms ease;
+}
+
+.portal-input {
+  width: 100%;
+  height: 2.75rem;
+  border-radius: 0.75rem;
+  background-color: #09090d;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  color: #f4f4f6;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.portal-textarea {
+  width: 100%;
+  border-radius: 0.75rem;
+  background-color: #09090d;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  color: #f4f4f6;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+@media (max-width: 639px) {
+  .portal-input {
+    height: 2.375rem;
+    font-size: 0.8125rem;
+    border-radius: 0.625rem;
+  }
+
+  .portal-textarea {
+    font-size: 0.8125rem;
+    border-radius: 0.625rem;
+  }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 44s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee:hover,
+.animate-marquee-reverse:hover {
+  animation-play-state: paused;
+}
+
+.animate-marquee-reverse {
+  display: flex;
+  width: max-content;
+  animation: marquee-reverse 48s linear infinite;
+  will-change: transform;
+}
+
+/* Smooth tab animation */
+.tab-active {
+  color: #f59e0b;
+  border-bottom: 2px solid #f59e0b;
+}
+
+/* Respect Reduced Motion Accessibility Preference */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
