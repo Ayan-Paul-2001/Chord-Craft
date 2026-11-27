@@ -198,6 +198,10 @@ export default function StudentLessonDetailPage() {
   }
 
   if (!isUnlocked) {
+    const lockedCourse =
+      lesson.courseId && lesson.courseId !== 'common'
+        ? courses.find((c) => c.id === lesson.courseId) || null
+        : null;
     return (
       <div className="space-y-8">
         <DashboardHeader title={`Lesson 0${lesson.lessonNumber} — Locked`} />
@@ -209,15 +213,27 @@ export default function StudentLessonDetailPage() {
             <span className="text-xs font-mono text-rose-400 font-bold uppercase tracking-wider">Access Restricted</span>
             <h2 className="font-display text-3xl font-semibold text-white">{lesson.title}</h2>
             <p className="text-xs text-zinc-400 max-w-md mx-auto leading-relaxed">
-              This lesson is currently locked for your student profile. {adminName} unlocks lessons sequentially once earlier prerequisites are completed.
+              {lockedCourse
+                ? `This lecture belongs to ${lockedCourse.title}. Enroll in this course or request lecture permission from ${adminName} to unlock it.`
+                : `This lesson is currently locked for your student profile. ${adminName} controls individual lecture permissions in the Access Matrix.`}
             </p>
           </div>
-          <button
-            onClick={() => router.push('/student/lessons')}
-            className="px-6 py-3 rounded-xl luxury-btn-ghost text-white font-bold text-xs cursor-pointer"
-          >
-            ← Back to Available Lessons
-          </button>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {lockedCourse && (
+              <Link
+                href={`/payment-lobby?course=${encodeURIComponent(lockedCourse.id)}`}
+                className="px-6 py-3 rounded-xl luxury-btn-primary font-bold text-xs"
+              >
+                Enroll in {lockedCourse.title} →
+              </Link>
+            )}
+            <button
+              onClick={() => router.push('/student/lessons')}
+              className="px-6 py-3 rounded-xl luxury-btn-ghost text-white font-bold text-xs cursor-pointer"
+            >
+              ← Back to My Course Lectures
+            </button>
+          </div>
         </div>
       </div>
     );

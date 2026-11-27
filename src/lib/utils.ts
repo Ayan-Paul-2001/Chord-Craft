@@ -32,7 +32,7 @@ export function formatDate(dateString: string): string {
   });
 }
 
-export function exportToCSV(filename: string, rows: Record<string, any>[]) {
+export function exportToCSV(filename: string, rows: Record<string, unknown>[]) {
   if (!rows || !rows.length) return;
   const separator = ',';
   const keys = Object.keys(rows[0]);
@@ -43,8 +43,13 @@ export function exportToCSV(filename: string, rows: Record<string, any>[]) {
       .map((row) => {
         return keys
           .map((k) => {
-            let cell = row[k] === null || row[k] === undefined ? '' : row[k];
-            cell = cell instanceof Date ? cell.toLocaleString() : cell.toString();
+            const raw = row[k];
+            let cell =
+              raw === null || raw === undefined
+                ? ''
+                : raw instanceof Date
+                ? raw.toLocaleString()
+                : String(raw);
             cell = cell.replace(/"/g, '""');
             if (cell.search(/("|,|\n)/g) >= 0) cell = `"${cell}"`;
             return cell;
@@ -232,13 +237,16 @@ export function getStudentEnrolledCourseIds(
 }
 
 /**
- * Helper to determine if a lesson is unlocked for a student.
- * - Public homepage demo lessons (`isPublic === true`) are always unlocked.
+ * Helper to determine if a lesson is unlocked inside the Student Portal.
  * - Admin always has full access.
- * - Common classes (`courseId === 'common'` or unset): accessible to all active students
- *   unless explicitly locked by admin via `lessonAccess`.
- * - Course-specific lectures (`courseId` matches a course ID): accessible to students enrolled
- *   in that course (unless explicitly locked by admin), OR if explicitly unlocked by admin in `lessonAccess`.
+ * - Explicit Admin `lessonAccess` override always wins:
+ *     `isUnlocked: true` permits a specific lecture (including from another course);
+ *     `isUnlocked: false` explicitly locks a lecture.
+ * - Without an explicit override:
+ *     Common preview classes (`courseId === 'common'` or unset) are accessible to all active students.
+ *     Course-specific lectures (`courseId` matching a course ID) are ONLY unlocked for students
+ *     enrolled in that course — never leaked to unenrolled students via `isPublic`.
+ * (Public homepage previews handle `lesson.isPublic` separately outside the student portal.)
  */
 export function isLessonUnlockedForStudent(
   lesson: { id: string; lessonNumber: number; isPublic?: boolean; courseId?: string },
@@ -246,7 +254,6 @@ export function isLessonUnlockedForStudent(
   usersRoster: { id: string; firebaseUid?: string; email: string; enrolledCourseIds?: string[] }[],
   lessonAccess: { studentId: string; lessonId: string; isUnlocked: boolean }[]
 ): boolean {
-  if (lesson.isPublic) return true;
   if (!user) return false;
   if (user.role === 'admin') return true;
 
@@ -275,8 +282,8 @@ export function isLessonUnlockedForStudent(
     return false;
   }
 
-  // No explicit override record:
-  // Common preview classes are open to all active students; course lectures open to enrolled course students
+  // No explicit Admin override record:
+  // Common preview classes are open to all active students; course lectures ONLY to enrolled course students
   if (isCommonClass) return true;
   if (isEnrolledInCourse) return true;
   return false;

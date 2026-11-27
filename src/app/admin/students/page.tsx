@@ -383,196 +383,366 @@ export default function AdminStudentsPage() {
               description="No student accounts matched your search criteria."
             />
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs min-w-[700px]">
-                <thead>
-                  <tr className="border-b border-zinc-800 text-zinc-400 font-mono uppercase tracking-wider">
-                    <th className="pb-3 px-4 whitespace-nowrap">Student Name</th>
-                    <th className="pb-3 px-4 whitespace-nowrap">Email</th>
-                    <th className="pb-3 px-4 whitespace-nowrap">Mobile</th>
-                    <th className="pb-3 px-4 whitespace-nowrap">Level</th>
-                    <th className="pb-3 px-4 whitespace-nowrap">Status & Sync</th>
-                    <th className="pb-3 px-4 whitespace-nowrap">Enrolled</th>
-                    <th className="pb-3 px-4 text-right whitespace-nowrap">Actions / Access</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-800/60 font-medium">
-                  {filteredStudents.map((student) => {
-                    const isUpdating = updatingId === student.id;
-                    const isActive = student.status === 'Active';
+            <>
+              {/* Desktop Full-Width Roster Table — Zero Horizontal Scrollbar */}
+              <div className="hidden lg:block w-full">
+                <table className="w-full table-fixed text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-zinc-800 text-zinc-400 font-mono text-[10.5px] uppercase tracking-wider">
+                      <th className="pb-3.5 pr-3 w-[27%] xl:w-[25%]">Student</th>
+                      <th className="pb-3.5 px-2.5 w-[25%] xl:w-[23%]">Contact</th>
+                      <th className="pb-3.5 px-2 w-[16%] xl:w-[14%]">Level</th>
+                      <th className="pb-3.5 px-2 w-[14%] xl:w-[12%]">Status</th>
+                      <th className="hidden xl:table-cell pb-3.5 px-2 w-[11%]">Enrolled</th>
+                      <th className="pb-3.5 pl-2 text-right w-[18%] xl:w-[15%]">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-800/60 font-medium">
+                    {filteredStudents.map((student) => {
+                      const isUpdating = updatingId === student.id;
+                      const isActive = student.status === 'Active';
+                      const cIds = getStudentEnrolledCourseIds(student, users);
+                      const firstCourse = cIds.length > 0 ? courses.find((c) => c.id === cIds[0]) : null;
 
-                    return (
-                      <tr key={student.id} className="hover:bg-zinc-800/40 transition group">
-                        {/* Clickable Student Name */}
-                        <td className="py-4 px-4 whitespace-nowrap">
-                          <button
-                            type="button"
-                            onClick={() => setSelectedStudentForDetails(student)}
-                            className="flex items-center gap-3 text-left group/name cursor-pointer focus:outline-none"
-                            title="Click to view all profile info filled up by this student"
-                          >
-                            <img
-                              src={
-                                student.avatarUrl ||
-                                'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80'
-                              }
-                              alt={student.fullName}
-                              className="w-8 h-8 rounded-full object-cover border border-amber-500/30 group-hover/name:border-amber-400 group-hover/name:scale-105 transition shrink-0"
-                            />
-                            <div className="min-w-0">
-                              <span className="font-bold text-white group-hover/name:text-amber-300 transition whitespace-nowrap block">
-                                {student.fullName}
-                              </span>
-                              {(() => {
-                                const cIds = getStudentEnrolledCourseIds(student, users);
-                                if (cIds.length === 0) return null;
-                                const firstCourse = courses.find((c) => c.id === cIds[0]);
-                                return (
-                                  <span className="inline-flex items-center gap-1 text-[10px] font-mono text-amber-300/90 mt-0.5">
+                      return (
+                        <tr key={student.id} className="hover:bg-zinc-800/40 transition group">
+                          {/* Clickable Student Name & Course */}
+                          <td className="py-3.5 pr-3">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedStudentForDetails(student)}
+                              className="flex items-center gap-2.5 text-left group/name cursor-pointer focus:outline-none w-full min-w-0"
+                              title="Click to view all profile info filled up by this student"
+                            >
+                              <img
+                                src={
+                                  student.avatarUrl ||
+                                  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80'
+                                }
+                                alt={student.fullName}
+                                className="w-8 h-8 rounded-full object-cover border border-amber-500/30 group-hover/name:border-amber-400 group-hover/name:scale-105 transition shrink-0"
+                              />
+                              <div className="min-w-0 flex-1">
+                                <span className="font-bold text-white group-hover/name:text-amber-300 transition truncate block">
+                                  {student.fullName}
+                                </span>
+                                {cIds.length > 0 && (
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-mono text-amber-300/90 mt-0.5 max-w-full">
                                     <GraduationCap className="w-3 h-3 shrink-0" />
-                                    <span className="truncate max-w-[165px]">
+                                    <span className="truncate">
                                       {firstCourse ? firstCourse.title : cIds[0]}
                                     </span>
-                                    {cIds.length > 1 && <span>+{cIds.length - 1}</span>}
+                                    {cIds.length > 1 && <span className="shrink-0">+{cIds.length - 1}</span>}
                                   </span>
-                                );
-                              })()}
+                                )}
+                              </div>
+                            </button>
+                          </td>
+
+                          {/* Stacked Contact (Email + Mobile) */}
+                          <td className="py-3.5 px-2.5 min-w-0">
+                            <div className="min-w-0 space-y-0.5">
+                              <p
+                                className="text-zinc-200 font-mono text-[11.5px] truncate"
+                                title={student.email}
+                              >
+                                {student.email}
+                              </p>
+                              <p className="text-zinc-400 font-mono text-[11px] truncate">
+                                {student.mobile || '—'}
+                              </p>
                             </div>
-                          </button>
-                        </td>
+                          </td>
 
-                        <td className="py-4 px-4 text-zinc-300 font-mono whitespace-nowrap">{student.email}</td>
-                        <td className="py-4 px-4 text-zinc-300 font-mono whitespace-nowrap">{student.mobile}</td>
-                        
-                        <td className="py-4 px-4 whitespace-nowrap">
-                          <div className="inline-flex items-center">
-                            {updatingLevelId === student.id ? (
-                              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-zinc-850 text-amber-400 border border-amber-500/30">
-                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                <span>Level...</span>
-                              </div>
-                            ) : (
-                              <div className="relative inline-flex items-center group">
-                                <select
-                                  value={student.level || 'Beginner'}
-                                  onChange={(e) =>
-                                    handleLevelChange(student.id, e.target.value as StudentLevel)
-                                  }
-                                  title="Change student level (syncs live to database)"
-                                  className={`appearance-none cursor-pointer pl-6 pr-7 py-1 rounded-full text-xs font-semibold border transition outline-none shadow-sm ${
-                                    student.level === 'Advanced'
-                                      ? 'bg-purple-950/70 text-purple-300 border-purple-500/40 hover:border-purple-400 hover:bg-purple-900/60'
-                                      : student.level === 'Intermediate'
-                                      ? 'bg-amber-950/70 text-amber-300 border-amber-500/40 hover:border-amber-400 hover:bg-amber-900/60'
-                                      : 'bg-emerald-950/70 text-emerald-300 border-emerald-500/40 hover:border-emerald-400 hover:bg-emerald-900/60'
-                                  }`}
+                          {/* Interactive Level Column */}
+                          <td className="py-3.5 px-2">
+                            <div className="inline-flex items-center max-w-full">
+                              {updatingLevelId === student.id ? (
+                                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-zinc-850 text-amber-400 border border-amber-500/30">
+                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                  <span>Sync...</span>
+                                </div>
+                              ) : (
+                                <div className="relative inline-flex items-center group max-w-full">
+                                  <select
+                                    value={student.level || 'Beginner'}
+                                    onChange={(e) =>
+                                      handleLevelChange(student.id, e.target.value as StudentLevel)
+                                    }
+                                    title="Change student level (syncs live to database)"
+                                    className={`appearance-none cursor-pointer pl-5 pr-6 py-1 rounded-full text-[11.5px] font-semibold border transition outline-none shadow-sm max-w-full ${
+                                      student.level === 'Advanced'
+                                        ? 'bg-purple-950/70 text-purple-300 border-purple-500/40 hover:border-purple-400 hover:bg-purple-900/60'
+                                        : student.level === 'Intermediate'
+                                        ? 'bg-amber-950/70 text-amber-300 border-amber-500/40 hover:border-amber-400 hover:bg-amber-900/60'
+                                        : 'bg-emerald-950/70 text-emerald-300 border-emerald-500/40 hover:border-emerald-400 hover:bg-emerald-900/60'
+                                    }`}
+                                  >
+                                    <option value="Beginner" className="bg-zinc-950 text-emerald-400 font-semibold py-1">
+                                      Beginner
+                                    </option>
+                                    <option value="Intermediate" className="bg-zinc-950 text-amber-400 font-semibold py-1">
+                                      Intermediate
+                                    </option>
+                                    <option value="Advanced" className="bg-zinc-950 text-purple-400 font-semibold py-1">
+                                      Advanced
+                                    </option>
+                                  </select>
+                                  <span
+                                    className={`absolute left-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full pointer-events-none ${
+                                      student.level === 'Advanced'
+                                        ? 'bg-purple-400'
+                                        : student.level === 'Intermediate'
+                                        ? 'bg-amber-400'
+                                        : 'bg-emerald-400'
+                                    }`}
+                                  />
+                                  <ChevronDown className="w-3 h-3 text-zinc-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none group-hover:text-white transition" />
+                                </div>
+                              )}
+                            </div>
+                          </td>
+
+                          {/* Interactive Status Column */}
+                          <td className="py-3.5 px-2">
+                            <div className="inline-flex items-center max-w-full">
+                              {isUpdating ? (
+                                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-zinc-850 text-amber-400 border border-amber-500/30">
+                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                  <span>Sync...</span>
+                                </div>
+                              ) : (
+                                <div className="relative inline-flex items-center group max-w-full">
+                                  <select
+                                    value={student.status}
+                                    onChange={(e) =>
+                                      handleStatusChange(student.id, e.target.value as UserStatus)
+                                    }
+                                    title="Change student status (syncs live to database)"
+                                    className={`appearance-none cursor-pointer pl-5 pr-6 py-1 rounded-full text-[11.5px] font-semibold border transition outline-none shadow-sm max-w-full ${
+                                      isActive
+                                        ? 'bg-emerald-950/70 text-emerald-300 border-emerald-500/40 hover:border-emerald-400 hover:bg-emerald-900/60'
+                                        : student.status === 'Pending'
+                                        ? 'bg-amber-950/70 text-amber-300 border-amber-500/40 hover:border-amber-400 hover:bg-amber-900/60'
+                                        : 'bg-rose-950/70 text-rose-300 border-rose-500/40 hover:border-rose-400 hover:bg-rose-900/60'
+                                    }`}
+                                  >
+                                    <option value="Active" className="bg-zinc-950 text-emerald-400 font-semibold py-1">
+                                      Active
+                                    </option>
+                                    <option value="Inactive" className="bg-zinc-950 text-rose-400 font-semibold py-1">
+                                      Inactive
+                                    </option>
+                                    <option value="Rejected" className="bg-zinc-950 text-rose-400 font-semibold py-1">
+                                      Rejected
+                                    </option>
+                                  </select>
+                                  <span
+                                    className={`absolute left-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full pointer-events-none ${
+                                      isActive
+                                        ? 'bg-emerald-400 animate-pulse'
+                                        : student.status === 'Pending'
+                                        ? 'bg-amber-400 animate-pulse'
+                                        : 'bg-rose-400'
+                                    }`}
+                                  />
+                                  <ChevronDown className="w-3 h-3 text-zinc-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none group-hover:text-white transition" />
+                                </div>
+                              )}
+                            </div>
+                          </td>
+
+                          {/* Enrolled Date (shown cleanly at xl+) */}
+                          <td className="hidden xl:table-cell py-3.5 px-2 text-zinc-400 font-mono text-[11px] whitespace-nowrap">
+                            {formatDate(student.registrationDate)}
+                          </td>
+
+                          {/* Action Column */}
+                          <td className="py-3.5 pl-2 text-right">
+                            <div className="flex items-center justify-end">
+                              {isActive ? (
+                                <Link
+                                  href={`/admin/students/${student.id}`}
+                                  className="px-2.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-[11.5px] transition inline-flex items-center gap-1 shadow-md hover:scale-[1.02] active:scale-95 whitespace-nowrap"
+                                  title="Manage Lesson & Course Access Matrix"
                                 >
-                                  <option value="Beginner" className="bg-zinc-950 text-emerald-400 font-semibold py-1">
-                                    Beginner
-                                  </option>
-                                  <option value="Intermediate" className="bg-zinc-950 text-amber-400 font-semibold py-1">
-                                    Intermediate
-                                  </option>
-                                  <option value="Advanced" className="bg-zinc-950 text-purple-400 font-semibold py-1">
-                                    Advanced
-                                  </option>
-                                </select>
-                                <span
-                                  className={`absolute left-2.5 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full pointer-events-none ${
-                                    student.level === 'Advanced'
-                                      ? 'bg-purple-400'
-                                      : student.level === 'Intermediate'
-                                      ? 'bg-amber-400'
-                                      : 'bg-emerald-400'
-                                  }`}
-                                />
-                                <ChevronDown className="w-3.5 h-3.5 text-zinc-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none group-hover:text-white transition" />
-                              </div>
+                                  <Lock className="w-3 h-3 shrink-0" />
+                                  <span>Manage Access</span>
+                                </Link>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => setStudentToDelete(student)}
+                                  className="px-2.5 py-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600 border border-rose-500/40 hover:border-rose-600 text-rose-300 hover:text-white font-bold text-[11.5px] transition inline-flex items-center gap-1.5 shadow-sm hover:scale-[1.02] active:scale-95 cursor-pointer whitespace-nowrap"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5 shrink-0" />
+                                  <span>Delete</span>
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile & Tablet Stacked Cards — Zero Horizontal Scrollbar */}
+              <div className="lg:hidden space-y-3">
+                {filteredStudents.map((student) => {
+                  const isUpdating = updatingId === student.id;
+                  const isActive = student.status === 'Active';
+                  const cIds = getStudentEnrolledCourseIds(student, users);
+                  const firstCourse = cIds.length > 0 ? courses.find((c) => c.id === cIds[0]) : null;
+
+                  return (
+                    <div
+                      key={student.id}
+                      className="p-4 rounded-2xl bg-[#09090d]/90 border border-white/[0.08] space-y-3.5"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedStudentForDetails(student)}
+                          className="flex items-center gap-3 text-left min-w-0 flex-1 cursor-pointer"
+                        >
+                          <img
+                            src={
+                              student.avatarUrl ||
+                              'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80'
+                            }
+                            alt={student.fullName}
+                            className="w-10 h-10 rounded-full object-cover border border-amber-500/35 shrink-0"
+                          />
+                          <div className="min-w-0">
+                            <p className="font-bold text-sm text-white truncate">{student.fullName}</p>
+                            <p className="text-[11px] font-mono text-zinc-400 truncate">{student.email}</p>
+                            {cIds.length > 0 && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-mono text-amber-300/90 mt-0.5 max-w-full">
+                                <GraduationCap className="w-3 h-3 shrink-0" />
+                                <span className="truncate">
+                                  {firstCourse ? firstCourse.title : cIds[0]}
+                                </span>
+                                {cIds.length > 1 && <span className="shrink-0">+{cIds.length - 1}</span>}
+                              </span>
                             )}
                           </div>
-                        </td>
+                        </button>
 
-                        {/* Interactive Status Column */}
-                        <td className="py-4 px-4 whitespace-nowrap">
-                          <div className="inline-flex items-center">
-                            {isUpdating ? (
-                              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-zinc-850 text-amber-400 border border-amber-500/30">
-                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                <span>Syncing...</span>
-                              </div>
-                            ) : (
-                              <div className="relative inline-flex items-center group">
-                                <select
-                                  value={student.status}
-                                  onChange={(e) =>
-                                    handleStatusChange(student.id, e.target.value as UserStatus)
-                                  }
-                                  title="Change student status (syncs live to database)"
-                                  className={`appearance-none cursor-pointer pl-6 pr-7 py-1 rounded-full text-xs font-semibold border transition outline-none shadow-sm ${
-                                    isActive
-                                      ? 'bg-emerald-950/70 text-emerald-300 border-emerald-500/40 hover:border-emerald-400 hover:bg-emerald-900/60'
-                                      : student.status === 'Pending'
-                                      ? 'bg-amber-950/70 text-amber-300 border-amber-500/40 hover:border-amber-400 hover:bg-amber-900/60'
-                                      : 'bg-rose-950/70 text-rose-300 border-rose-500/40 hover:border-rose-400 hover:bg-rose-900/60'
-                                  }`}
-                                >
-                                  <option value="Active" className="bg-zinc-950 text-emerald-400 font-semibold py-1">
-                                    Active
-                                  </option>
-                                  <option value="Inactive" className="bg-zinc-950 text-rose-400 font-semibold py-1">
-                                    Inactive
-                                  </option>
-                                  <option value="Rejected" className="bg-zinc-950 text-rose-400 font-semibold py-1">
-                                    Rejected
-                                  </option>
-                                </select>
-                                <span
-                                  className={`absolute left-2.5 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full pointer-events-none ${
-                                    isActive
-                                      ? 'bg-emerald-400 animate-pulse'
-                                      : student.status === 'Pending'
-                                      ? 'bg-amber-400 animate-pulse'
-                                      : 'bg-rose-400'
-                                  }`}
-                                />
-                                <ChevronDown className="w-3.5 h-3.5 text-zinc-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none group-hover:text-white transition" />
-                              </div>
-                            )}
-                          </div>
-                        </td>
-
-                        <td className="py-4 px-4 text-zinc-400 font-mono whitespace-nowrap">
+                        <span className="text-[10.5px] font-mono text-zinc-500 shrink-0 pt-0.5">
                           {formatDate(student.registrationDate)}
-                        </td>
+                        </span>
+                      </div>
 
-                        {/* Action Column: Inactive students get Delete option, Active students get Manage Access Matrix */}
-                        <td className="py-4 px-4 text-right whitespace-nowrap">
-                          <div className="flex items-center justify-end gap-2">
-                            {isActive ? (
-                              <Link
-                                href={`/admin/students/${student.id}`}
-                                className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs transition inline-flex items-center gap-1 shadow-md hover:scale-105 active:scale-95"
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] font-mono text-zinc-400">
+                        <span className="inline-flex items-center gap-1.5">
+                          <Phone className="w-3 h-3 text-amber-400/80" />
+                          <span>{student.mobile || '—'}</span>
+                        </span>
+                      </div>
+
+                      <div className="flex flex-wrap items-center justify-between gap-2.5 pt-2.5 border-t border-white/[0.06]">
+                        <div className="flex flex-wrap items-center gap-2">
+                          {/* Level pill */}
+                          {updatingLevelId === student.id ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-zinc-900 text-amber-400 border border-amber-500/30">
+                              <Loader2 className="w-3 h-3 animate-spin" /> Syncing...
+                            </span>
+                          ) : (
+                            <div className="relative inline-flex items-center">
+                              <select
+                                value={student.level || 'Beginner'}
+                                onChange={(e) =>
+                                  handleLevelChange(student.id, e.target.value as StudentLevel)
+                                }
+                                className={`appearance-none cursor-pointer pl-5 pr-6 py-1 rounded-full text-[11px] font-semibold border outline-none ${
+                                  student.level === 'Advanced'
+                                    ? 'bg-purple-950/70 text-purple-300 border-purple-500/40'
+                                    : student.level === 'Intermediate'
+                                    ? 'bg-amber-950/70 text-amber-300 border-amber-500/40'
+                                    : 'bg-emerald-950/70 text-emerald-300 border-emerald-500/40'
+                                }`}
                               >
-                                <Lock className="w-3 h-3" /> Manage Access Matrix →
-                              </Link>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => setStudentToDelete(student)}
-                                className="px-3 py-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600 border border-rose-500/40 hover:border-rose-600 text-rose-300 hover:text-white font-bold text-xs transition inline-flex items-center gap-1.5 shadow-sm hover:scale-105 active:scale-95 cursor-pointer"
+                                <option value="Beginner" className="bg-zinc-950 text-emerald-400">Beginner</option>
+                                <option value="Intermediate" className="bg-zinc-950 text-amber-400">Intermediate</option>
+                                <option value="Advanced" className="bg-zinc-950 text-purple-400">Advanced</option>
+                              </select>
+                              <span
+                                className={`absolute left-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full pointer-events-none ${
+                                  student.level === 'Advanced'
+                                    ? 'bg-purple-400'
+                                    : student.level === 'Intermediate'
+                                    ? 'bg-amber-400'
+                                    : 'bg-emerald-400'
+                                }`}
+                              />
+                              <ChevronDown className="w-3 h-3 text-zinc-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                            </div>
+                          )}
+
+                          {/* Status pill */}
+                          {isUpdating ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-zinc-900 text-amber-400 border border-amber-500/30">
+                              <Loader2 className="w-3 h-3 animate-spin" /> Syncing...
+                            </span>
+                          ) : (
+                            <div className="relative inline-flex items-center">
+                              <select
+                                value={student.status}
+                                onChange={(e) =>
+                                  handleStatusChange(student.id, e.target.value as UserStatus)
+                                }
+                                className={`appearance-none cursor-pointer pl-5 pr-6 py-1 rounded-full text-[11px] font-semibold border outline-none ${
+                                  isActive
+                                    ? 'bg-emerald-950/70 text-emerald-300 border-emerald-500/40'
+                                    : student.status === 'Pending'
+                                    ? 'bg-amber-950/70 text-amber-300 border-amber-500/40'
+                                    : 'bg-rose-950/70 text-rose-300 border-rose-500/40'
+                                }`}
                               >
-                                <Trash2 className="w-3.5 h-3.5" />
-                                <span>Delete Student</span>
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                                <option value="Active" className="bg-zinc-950 text-emerald-400">Active</option>
+                                <option value="Inactive" className="bg-zinc-950 text-rose-400">Inactive</option>
+                                <option value="Rejected" className="bg-zinc-950 text-rose-400">Rejected</option>
+                              </select>
+                              <span
+                                className={`absolute left-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full pointer-events-none ${
+                                  isActive
+                                    ? 'bg-emerald-400 animate-pulse'
+                                    : student.status === 'Pending'
+                                    ? 'bg-amber-400 animate-pulse'
+                                    : 'bg-rose-400'
+                                }`}
+                              />
+                              <ChevronDown className="w-3 h-3 text-zinc-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                            </div>
+                          )}
+                        </div>
+
+                        {isActive ? (
+                          <Link
+                            href={`/admin/students/${student.id}`}
+                            className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs transition inline-flex items-center gap-1"
+                          >
+                            <Lock className="w-3 h-3" />
+                            <span>Manage Access</span>
+                          </Link>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setStudentToDelete(student)}
+                            className="px-3 py-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600 border border-rose-500/40 text-rose-300 hover:text-white font-bold text-xs transition inline-flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Delete</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
           )}
         </div>
       </div>

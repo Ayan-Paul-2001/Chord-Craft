@@ -9,10 +9,29 @@ import { formatDate } from '@/lib/utils';
 import { CalendarCheck, Calendar } from 'lucide-react';
 
 export default function StudentAttendancePage() {
-  const { attendance, currentUser, adminName } = useStore();
+  const { attendance, users, currentUser, adminName } = useStore();
 
-  const studentId = currentUser?.id || '';
-  const studentAtt = studentId ? attendance.filter((a) => a.studentId === studentId) : [];
+  const studentInRoster = currentUser
+    ? users.find(
+        (u) =>
+          u.id === currentUser.id ||
+          (u.email && currentUser.email && u.email.toLowerCase() === currentUser.email.toLowerCase())
+      )
+    : null;
+
+  const ownStudentIds = new Set(
+    [
+      currentUser?.id,
+      currentUser?.firebaseUid,
+      studentInRoster?.id,
+      studentInRoster?.firebaseUid,
+    ].filter((v): v is string => Boolean(v))
+  );
+
+  const studentAtt =
+    ownStudentIds.size > 0
+      ? attendance.filter((a) => ownStudentIds.has(a.studentId))
+      : [];
 
   const totalSessions = studentAtt.length;
   const present = studentAtt.filter((a) => a.status === 'Present').length;
@@ -20,7 +39,8 @@ export default function StudentAttendancePage() {
   const absent = studentAtt.filter((a) => a.status === 'Absent').length;
   const excused = studentAtt.filter((a) => a.status === 'Excused').length;
 
-  const attendanceRate = totalSessions > 0 ? Math.round(((present + late) / totalSessions) * 100) : 100;
+  const attendanceRate =
+    totalSessions > 0 ? Math.round(((present + late) / totalSessions) * 100) : null;
 
   return (
     <div className="space-y-8">
@@ -36,8 +56,12 @@ export default function StudentAttendancePage() {
             <span className="text-[10px] sm:text-[10.5px] font-mono font-semibold text-amber-300 uppercase tracking-[0.14em] sm:tracking-[0.16em]">
               Attendance Rate
             </span>
-            <p className="portal-kpi-num text-3xl sm:text-4xl text-white">{attendanceRate}%</p>
-            <p className="text-xs text-zinc-400 tabular-nums">Total sessions: {studentAtt.length}</p>
+            <p className="portal-kpi-num text-3xl sm:text-4xl text-white">
+              {attendanceRate !== null ? `${attendanceRate}%` : '—'}
+            </p>
+            <p className="text-xs text-zinc-400 tabular-nums">
+              {totalSessions > 0 ? `Total sessions: ${totalSessions}` : 'No sessions recorded yet'}
+            </p>
           </div>
 
           <div className="p-4 sm:p-5 rounded-2xl portal-kpi-card animate-stagger space-y-1.5 sm:space-y-2" style={{ animationDelay: '50ms' }}>

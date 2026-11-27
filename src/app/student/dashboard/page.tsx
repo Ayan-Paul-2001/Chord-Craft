@@ -108,11 +108,22 @@ export default function StudentDashboardPage() {
 
   const progressPercentage = unlockedCount > 0 ? Math.round((completedCount / unlockedCount) * 100) : 0;
 
-  // Attendance stats for student
-  const studentAtt = attendance.filter((a) => a.studentId === studentId);
-  const totalAttSessions = studentAtt.length || 1;
+  // Attendance stats for student (match across all linked IDs; never fabricate 100% when 0 sessions exist)
+  const ownStudentIds = new Set(
+    [
+      studentId,
+      currentUser?.firebaseUid,
+      studentInRoster?.id,
+      studentInRoster?.firebaseUid,
+    ].filter((v): v is string => Boolean(v))
+  );
+  const studentAtt =
+    ownStudentIds.size > 0
+      ? attendance.filter((a) => ownStudentIds.has(a.studentId))
+      : [];
   const presentCount = studentAtt.filter((a) => a.status === 'Present' || a.status === 'Late').length;
-  const attendanceRate = studentAtt.length > 0 ? Math.round((presentCount / totalAttSessions) * 100) : 100;
+  const attendanceRate =
+    studentAtt.length > 0 ? Math.round((presentCount / studentAtt.length) * 100) : null;
 
   // Animated mastery chart data per guitar tier
   const masteryByLevel = useMemo(() => {
@@ -276,9 +287,11 @@ export default function StudentDashboardPage() {
                 <CalendarCheck className="w-3 h-3 sm:w-4 sm:h-4" />
               </div>
             </div>
-            <p className="portal-kpi-num text-2xl sm:text-[2.75rem] text-white">{attendanceRate}%</p>
+            <p className="portal-kpi-num text-2xl sm:text-[2.75rem] text-white">
+              {attendanceRate !== null ? `${attendanceRate}%` : '—'}
+            </p>
             <p className="text-[10px] sm:text-xs text-zinc-400 truncate">
-              {studentAtt.length > 0 ? `${studentAtt.length} Recorded Sessions` : 'Academy Sessions'}
+              {studentAtt.length > 0 ? `${studentAtt.length} Recorded Sessions` : 'No sessions recorded yet'}
             </p>
           </div>
         </div>
@@ -378,110 +391,6 @@ export default function StudentDashboardPage() {
                 </div>
               ))}
             </div>
-          </div>
-        </section>
-
-        {/* My Enrolled Courses & Common Preview Classes */}
-        <section className="space-y-3.5 sm:space-y-5">
-          <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
-            <div>
-              <h3 className="portal-heading text-base sm:text-2xl text-white flex items-center gap-2">
-                <GraduationCap className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400 shrink-0" />
-                <span>My Enrolled Courses ({enrolledCourses.length})</span>
-              </h3>
-              <p className="text-[11px] sm:text-xs text-zinc-400 mt-0.5">
-                Access course-separated lectures or preview Common Academy classes available to all students
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Link
-                href="/student/lessons?course=common"
-                className="px-3 py-1.5 rounded-lg bg-emerald-500/12 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[11px] font-semibold inline-flex items-center gap-1.5 transition"
-              >
-                <Layers className="w-3.5 h-3.5" />
-                <span>Common Classes</span>
-              </Link>
-              <Link
-                href="/payment-lobby"
-                className="px-3 py-1.5 rounded-lg luxury-btn-primary text-[11px] font-bold inline-flex items-center gap-1"
-              >
-                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                <span>Add Course</span>
-              </Link>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-5">
-            {enrolledCourses.map((course) => {
-              const cLessons = unlockedLessons.filter((l) => l.courseId === course.id);
-              const cDone = cLessons.filter((l) => {
-                const lp = findLessonProgressForStudent(l, currentUser, users, lessonProgress);
-                return lp?.status === 'Completed';
-              }).length;
-              const cPct = cLessons.length > 0 ? Math.round((cDone / cLessons.length) * 100) : 0;
-
-              return (
-                <Link
-                  key={course.id}
-                  href={`/student/lessons?course=${encodeURIComponent(course.id)}`}
-                  className="p-3.5 sm:p-5 rounded-2xl portal-surface border border-white/[0.08] hover:border-amber-400/45 transition flex flex-col justify-between gap-3 group"
-                >
-                  <div className="flex items-start gap-3">
-                    <img
-                      src={course.thumbnail}
-                      alt={course.title}
-                      className="w-14 h-14 rounded-xl object-cover border border-white/[0.08] shrink-0"
-                    />
-                    <div className="min-w-0 flex-1 space-y-1">
-                      <StatusBadge status={course.level} size="sm" />
-                      <h4 className="text-sm font-bold text-white group-hover:text-amber-300 transition leading-snug line-clamp-2">
-                        {course.title}
-                      </h4>
-                      <p className="text-[10.5px] font-mono text-zinc-400">
-                        {cDone}/{cLessons.length} Lectures Done • {course.duration}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <div className="w-full h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-amber-300 to-amber-500 transition-all duration-500"
-                        style={{ width: `${cPct}%` }}
-                      />
-                    </div>
-                    <span className="text-[11px] font-bold text-amber-300 inline-flex items-center gap-1">
-                      <span>Open Course Lectures</span>
-                      <ArrowRight className="w-3 h-3" />
-                    </span>
-                  </div>
-                </Link>
-              );
-            })}
-
-            {/* Always-visible Common Classes Preview Card */}
-            <Link
-              href="/student/lessons?course=common"
-              className="p-3.5 sm:p-5 rounded-2xl bg-emerald-500/[0.06] border border-emerald-500/25 hover:border-emerald-400/50 transition flex flex-col justify-between gap-3 group"
-            >
-              <div className="space-y-1.5">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[10px] font-mono font-bold">
-                  <Layers className="w-3 h-3" />
-                  <span>Open To All Students</span>
-                </span>
-                <h4 className="text-sm sm:text-base font-bold text-white group-hover:text-emerald-300 transition">
-                  Common Academy Preview Classes
-                </h4>
-                <p className="text-xs text-zinc-400 leading-relaxed">
-                  Shared warmups, picking mechanics, and academy announcements previewable across every enrolled course.
-                </p>
-              </div>
-              <span className="text-[11px] font-bold text-emerald-300 inline-flex items-center gap-1">
-                <span>
-                  Preview {unlockedLessons.filter((l) => !l.courseId || l.courseId === 'common').length} Common Classes
-                </span>
-                <ArrowRight className="w-3 h-3" />
-              </span>
-            </Link>
           </div>
         </section>
 

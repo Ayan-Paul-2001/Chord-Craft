@@ -8,20 +8,47 @@ import { MOCK_LESSONS } from '@/lib/mockData';
 import { getSession, requireAdmin } from '@/lib/authGuard';
 import { matchesLessonIdentifier } from '@/lib/utils';
 
+interface LessonDocLike {
+  _id?: { toString(): string } | string;
+  id?: string;
+  title?: string;
+  description?: string;
+  level?: string;
+  courseId?: string;
+  lessonNumber: number;
+  videoUrl?: string;
+  audioUrl?: string;
+  tabFileUrl?: string;
+  tabPreviewText?: string;
+  thumbnail?: string;
+  durationMinutes?: number;
+  instructorNotes?: string;
+  isPublic?: boolean;
+  createdAt?: Date | string;
+}
+
+interface LeanStudentRecord {
+  _id?: { toString(): string } | string;
+  firebaseUid?: string;
+  email?: string;
+  status?: string;
+  enrolledCourseIds?: string[];
+}
+
 // GET /api/lessons/[id] — Public lessons open to all; private lessons strictly require Admin or unlocked Active Student
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectToDatabase();
     const { id } = await params;
 
-    let lesson: any = null;
+    let lesson: LessonDocLike | null = null;
     if (mongoose.Types.ObjectId.isValid(id)) {
-      lesson = await LessonModel.findById(id).lean();
+      lesson = (await LessonModel.findById(id).lean()) as unknown as LessonDocLike | null;
     }
     if (!lesson) {
       const numMatch = id.match(/lsn-(\d+)/i);
       if (numMatch) {
-        lesson = await LessonModel.findOne({ lessonNumber: Number(numMatch[1]) }).lean();
+        lesson = (await LessonModel.findOne({ lessonNumber: Number(numMatch[1]) }).lean()) as unknown as LessonDocLike | null;
       }
     }
     if (!lesson) {
@@ -43,7 +70,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     let allowed = lessonObj.isPublic || session?.role === 'admin';
 
     if (!allowed && session?.role === 'student') {
-      const dbUser = await UserModel.findOne({ email: session.email.toLowerCase().trim() }).lean() as any;
+      const dbUser = (await UserModel.findOne({
+        email: session.email.toLowerCase().trim(),
+      }).lean()) as unknown as LeanStudentRecord | null;
       const effectiveStatus = dbUser?.status || session.status;
       if (effectiveStatus === 'Active') {
         const enrolledCourseIds: string[] = Array.isArray(dbUser?.enrolledCourseIds)
@@ -111,8 +140,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
             : String(lesson.createdAt || new Date().toISOString().split('T')[0]),
       },
     });
-  } catch (error: any) {
-    return NextResponse.json({ error: error?.message || 'Failed to fetch lesson' }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to fetch lesson' },
+      { status: 500 }
+    );
   }
 }
 
@@ -124,26 +156,35 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     await connectToDatabase();
     const { id } = await params;
-    const body = await req.json();
+    const body = (await req.json()) as Record<string, unknown>;
 
-    let lesson: any = null;
+    let lesson: LessonDocLike | null = null;
 
     if (mongoose.Types.ObjectId.isValid(id)) {
-      lesson = await LessonModel.findByIdAndUpdate(id, body, { returnDocument: 'after', runValidators: true }).lean();
+      lesson = (await LessonModel.findByIdAndUpdate(id, body, {
+        returnDocument: 'after',
+        runValidators: true,
+      }).lean()) as unknown as LessonDocLike | null;
     }
 
     if (!lesson) {
       const numMatch = id.match(/lsn-(\d+)/i);
-      const targetLessonNumber = body.lessonNumber || (numMatch ? Number(numMatch[1]) : undefined);
+      const targetLessonNumber =
+        typeof body.lessonNumber === 'number'
+          ? body.lessonNumber
+          : numMatch
+          ? Number(numMatch[1])
+          : undefined;
 
       if (targetLessonNumber !== undefined) {
-        lesson = await LessonModel.findOneAndUpdate(
+        lesson = (await LessonModel.findOneAndUpdate(
           { lessonNumber: targetLessonNumber },
           body,
           { upsert: true, returnDocument: 'after', runValidators: true }
-        ).lean();
+        ).lean()) as unknown as LessonDocLike | null;
       } else {
-        lesson = await LessonModel.create(body);
+        const created = await LessonModel.create(body);
+        lesson = created.toObject() as unknown as LessonDocLike;
       }
     }
 
@@ -156,8 +197,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...lesson,
       },
     });
-  } catch (error: any) {
-    return NextResponse.json({ error: error?.message || 'Failed to update lesson' }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to update lesson' },
+      { status: 500 }
+    );
   }
 }
 
@@ -182,7 +226,10 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     }
 
     return NextResponse.json({ success: true, message: 'Lesson deleted' });
-  } catch (error: any) {
-    return NextResponse.json({ error: error?.message || 'Failed to delete lesson' }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to delete lesson' },
+      { status: 500 }
+    );
   }
 }

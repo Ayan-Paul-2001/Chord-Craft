@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useStore } from '@/context/StoreContext';
 import { DashboardHeader } from '@/components/shared/DashboardHeader';
-import { StatusBadge } from '@/components/shared/StatusBadge';
 import { StudentLevel } from '@/lib/types';
 import {
   User,
@@ -25,11 +24,7 @@ import {
   KeyRound,
   Loader2,
   Trash2,
-  Clock,
   GraduationCap,
-  BookOpen,
-  ArrowRight,
-  Layers,
   Plus,
 } from 'lucide-react';
 import { uploadImageToCloudinary, deleteImageFromCloudinary, isCloudinaryUrl } from '@/lib/uploadClient';
@@ -37,8 +32,6 @@ import {
   isValidMobile,
   cleanMobileNumber,
   getStudentEnrolledCourseIds,
-  isLessonUnlockedForStudent,
-  findLessonProgressForStudent,
 } from '@/lib/utils';
 
 const LEVEL_OPTIONS: {
@@ -72,10 +65,6 @@ export default function StudentProfilePage() {
     currentUser,
     users,
     courses,
-    courseEnrollments,
-    lessons,
-    lessonAccess,
-    lessonProgress,
     adminName,
     updateProfile,
     requestPasswordResetLink,
@@ -85,18 +74,6 @@ export default function StudentProfilePage() {
 
   const enrolledCourseIds = getStudentEnrolledCourseIds(currentUser, users);
   const enrolledCourses = courses.filter((c) => enrolledCourseIds.includes(c.id));
-  const pendingEnrollments = courseEnrollments.filter(
-    (e) =>
-      currentUser &&
-      (e.studentId === currentUser.id ||
-        e.studentEmail.toLowerCase() === currentUser.email.toLowerCase()) &&
-      e.paymentStatus === 'Pending'
-  );
-  const commonLessonsCount = lessons.filter(
-    (l) =>
-      (!l.courseId || l.courseId === 'common') &&
-      isLessonUnlockedForStudent(l, currentUser, users, lessonAccess)
-  ).length;
 
   // Profile Form States (draft overrides currentUser smoothly without effect setState)
   const [fullNameDraft, setFullNameDraft] = useState<string | null>(null);
@@ -272,172 +249,6 @@ export default function StudentProfilePage() {
       />
 
       <div className="px-4 sm:px-6 lg:px-8 space-y-6 sm:space-y-8 max-w-4xl mx-auto">
-        {/* Enrolled Courses Space in Student Profile */}
-        <section className="p-5 sm:p-8 lg:p-9 rounded-3xl portal-surface space-y-6 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-72 h-32 bg-amber-500/[0.06] rounded-full blur-3xl pointer-events-none" />
-
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.07] pb-5 relative z-10">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-amber-500/12 border border-amber-400/25 text-amber-300 shrink-0">
-                <GraduationCap className="w-5 h-5" />
-              </div>
-              <div>
-                <h2 className="portal-heading text-xl sm:text-2xl text-white">
-                  My Enrolled Courses ({enrolledCourses.length})
-                </h2>
-                <p className="text-xs text-zinc-400 mt-0.5">
-                  Your active conservatory tracks &amp; common academy preview access
-                </p>
-              </div>
-            </div>
-
-            <Link
-              href="/payment-lobby"
-              className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl luxury-btn-primary text-xs font-bold self-start sm:self-auto shrink-0"
-            >
-              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>Enroll in Another Course</span>
-            </Link>
-          </div>
-
-          {/* Pending additional course payment notice */}
-          {pendingEnrollments.length > 0 && (
-            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-400/35 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-start gap-2.5 text-xs">
-                <Clock className="w-4 h-4 text-amber-400 shrink-0 mt-0.5 animate-pulse" />
-                <div>
-                  <p className="font-bold text-amber-200">
-                    Pending Course Payment Verification ({pendingEnrollments.length})
-                  </p>
-                  <p className="text-zinc-300 mt-0.5">
-                    {pendingEnrollments.map((pe) => `${pe.courseTitle} (TrxID: ${pe.bKashTransactionId})`).join(' • ')}
-                  </p>
-                </div>
-              </div>
-              <Link
-                href={`/payment-lobby?course=${encodeURIComponent(pendingEnrollments[0].courseId)}`}
-                className="px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-200 text-xs font-bold shrink-0 text-center"
-              >
-                View Payment Status →
-              </Link>
-            </div>
-          )}
-
-          {enrolledCourses.length === 0 ? (
-            <div className="p-6 rounded-2xl bg-[#09090d] border border-white/[0.07] text-center space-y-3">
-              <p className="text-sm font-semibold text-white">No dedicated course enrolled yet</p>
-              <p className="text-xs text-zinc-400 max-w-md mx-auto">
-                You currently have access to {commonLessonsCount} Common Academy preview classes. Enroll in a signature course track to unlock its full lecture series.
-              </p>
-              <Link
-                href="/payment-lobby"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl luxury-btn-primary text-xs font-bold"
-              >
-                <span>Browse &amp; Enroll Courses</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {enrolledCourses.map((course) => {
-                const courseLessons = lessons.filter(
-                  (l) =>
-                    l.courseId === course.id &&
-                    isLessonUnlockedForStudent(l, currentUser, users, lessonAccess)
-                );
-                const completedInCourse = courseLessons.filter((l) => {
-                  const lp = findLessonProgressForStudent(l, currentUser, users, lessonProgress);
-                  return lp?.status === 'Completed';
-                }).length;
-                const pct =
-                  courseLessons.length > 0
-                    ? Math.round((completedInCourse / courseLessons.length) * 100)
-                    : 0;
-
-                return (
-                  <div
-                    key={course.id}
-                    className="rounded-2xl bg-[#09090d] border border-white/[0.08] hover:border-amber-400/40 transition overflow-hidden flex flex-col justify-between"
-                  >
-                    <div className="p-4 space-y-3">
-                      <div className="flex items-start gap-3">
-                        <img
-                          src={course.thumbnail}
-                          alt={course.title}
-                          className="w-16 h-16 rounded-xl object-cover border border-white/[0.08] shrink-0"
-                        />
-                        <div className="min-w-0 flex-1 space-y-1">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <StatusBadge status={course.level} size="sm" />
-                            <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[9.5px] font-mono font-bold">
-                              Verified
-                            </span>
-                          </div>
-                          <h3 className="text-sm font-bold text-white leading-snug line-clamp-2">
-                            {course.title}
-                          </h3>
-                          <p className="text-[11px] font-mono text-zinc-400">
-                            {course.duration} • Mentor: {course.instructorName || adminName}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <div className="flex items-center justify-between text-[11px] font-mono">
-                          <span className="text-zinc-400 flex items-center gap-1">
-                            <BookOpen className="w-3 h-3 text-amber-400" />
-                            <span>
-                              {completedInCourse}/{courseLessons.length} Lectures Completed
-                            </span>
-                          </span>
-                          <span className="text-amber-300 font-bold">{pct}%</span>
-                        </div>
-                        <div className="w-full h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-                          <div
-                            className="h-full rounded-full bg-gradient-to-r from-amber-300 to-amber-500 transition-all duration-500"
-                            style={{ width: `${pct}%` }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="px-4 py-3 bg-white/[0.02] border-t border-white/[0.06] flex items-center justify-between">
-                      <span className="text-[10.5px] font-mono text-zinc-500">
-                        Course Track Active
-                      </span>
-                      <Link
-                        href={`/student/lessons?course=${encodeURIComponent(course.id)}`}
-                        className="text-xs font-bold text-amber-300 hover:text-amber-200 inline-flex items-center gap-1"
-                      >
-                        <span>Open Lectures</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </Link>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Common Academy Preview Strip */}
-          <div className="p-3.5 rounded-2xl bg-emerald-500/[0.06] border border-emerald-500/25 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5 text-xs">
-              <Layers className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span className="text-zinc-200">
-                <strong className="text-emerald-300">Common Academy Classes:</strong>{' '}
-                {commonLessonsCount} previewable classes shared across all enrolled students.
-              </span>
-            </div>
-            <Link
-              href="/student/lessons?course=common"
-              className="text-xs font-bold text-emerald-300 hover:text-emerald-200 inline-flex items-center gap-1"
-            >
-              <span>Preview Common Classes</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-        </section>
-
         {/* Profile Card Form */}
         <form
           onSubmit={handleProfileSave}
@@ -770,6 +581,48 @@ export default function StudentProfilePage() {
             </button>
           </div>
         </form>
+
+        {/* Enrolled Course Names Tab Section (Below Personal Information) */}
+        <section className="p-5 sm:p-7 rounded-3xl portal-surface space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.07] pb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-amber-500/12 border border-amber-400/25 text-amber-300 shrink-0">
+                <GraduationCap className="w-4 h-4" />
+              </div>
+              <div className="flex items-center gap-2.5">
+                <h2 className="portal-heading text-lg sm:text-xl text-white">Enrolled Courses</h2>
+                <span className="px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-400/30 text-amber-300 text-[11px] font-mono font-bold">
+                  {enrolledCourses.length}
+                </span>
+              </div>
+            </div>
+
+            <Link
+              href="/payment-lobby"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.04] hover:bg-amber-500/15 border border-white/[0.08] hover:border-amber-400/35 text-zinc-200 hover:text-amber-300 text-xs font-semibold transition"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Enroll Course</span>
+            </Link>
+          </div>
+
+          {enrolledCourses.length === 0 ? (
+            <p className="text-xs text-zinc-400">No enrolled courses yet.</p>
+          ) : (
+            <div className="flex flex-wrap items-center gap-2.5" role="tablist" aria-label="Enrolled Courses">
+              {enrolledCourses.map((course) => (
+                <Link
+                  key={course.id}
+                  href={`/student/lessons?course=${encodeURIComponent(course.id)}`}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-400/30 hover:border-amber-400/60 text-amber-200 hover:text-white text-xs sm:text-sm font-semibold transition"
+                >
+                  <GraduationCap className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <span>{course.title}</span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
 
         {/* Account Security & Password */}
         <div className="p-5 sm:p-8 lg:p-9 rounded-3xl portal-surface space-y-6 relative overflow-hidden">

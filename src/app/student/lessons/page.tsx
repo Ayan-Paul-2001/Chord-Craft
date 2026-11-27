@@ -55,21 +55,39 @@ function StudentLessonsContent() {
     [lessons, currentUser, users, lessonAccess]
   );
 
-  // Courses relevant to this student (enrolled courses + any course with explicitly unlocked lectures)
+  // Strictly show enrolled courses + any course containing explicitly Admin-permitted lectures
   const studentCourseTabs = useMemo(() => {
-    const courseIdsFromUnlocked = new Set<string>(enrolledCourseIds);
+    const enrolledSet = new Set<string>(enrolledCourseIds);
+    const permittedCourseIds = new Set<string>();
+
     unlockedLessons.forEach((l) => {
-      if (l.courseId && l.courseId !== 'common') {
-        courseIdsFromUnlocked.add(l.courseId);
+      if (l.courseId && l.courseId !== 'common' && !enrolledSet.has(l.courseId)) {
+        permittedCourseIds.add(l.courseId);
       }
     });
+
+    const visibleIds = new Set<string>([...enrolledSet, ...permittedCourseIds]);
+
     return courses
-      .filter((c) => courseIdsFromUnlocked.has(c.id))
-      .sort((a, b) => (a.order || 0) - (b.order || 0));
+      .filter((c) => visibleIds.has(c.id))
+      .sort((a, b) => {
+        const aEnrolled = enrolledSet.has(a.id) ? 0 : 1;
+        const bEnrolled = enrolledSet.has(b.id) ? 0 : 1;
+        if (aEnrolled !== bEnrolled) return aEnrolled - bEnrolled;
+        return (a.order || 0) - (b.order || 0);
+      });
   }, [courses, enrolledCourseIds, unlockedLessons]);
 
   const activeCourseTab = useMemo(() => {
-    if (pickedCourseTab) return pickedCourseTab;
+    if (pickedCourseTab) {
+      if (
+        pickedCourseTab === 'all' ||
+        pickedCourseTab === 'common' ||
+        studentCourseTabs.some((c) => c.id === pickedCourseTab)
+      ) {
+        return pickedCourseTab;
+      }
+    }
     if (queryCourse === 'common') return 'common';
     if (queryCourse && studentCourseTabs.some((c) => c.id === queryCourse)) {
       return queryCourse;
@@ -195,6 +213,7 @@ function StudentLessonsContent() {
           {studentCourseTabs.map((course) => {
             const count = unlockedLessons.filter((l) => l.courseId === course.id).length;
             const active = activeCourseTab === course.id;
+            const isEnrolledTab = enrolledCourseIds.includes(course.id);
             return (
               <button
                 key={course.id}
@@ -210,6 +229,11 @@ function StudentLessonsContent() {
                 <span>
                   {course.title} ({count})
                 </span>
+                {!isEnrolledTab && (
+                  <span className="px-1.5 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[9px] font-mono uppercase">
+                    Permitted
+                  </span>
+                )}
               </button>
             );
           })}
@@ -229,7 +253,15 @@ function StudentLessonsContent() {
             <span className="flex items-center gap-2">
               <GraduationCap className="w-4 h-4 text-amber-400 shrink-0" />
               <span>
-                Showing lectures exclusively for <strong>{activeCourseObj.title}</strong> ({activeCourseObj.level})
+                {enrolledCourseIds.includes(activeCourseObj.id) ? (
+                  <>
+                    Showing enrolled course lectures for <strong>{activeCourseObj.title}</strong> ({activeCourseObj.level})
+                  </>
+                ) : (
+                  <>
+                    Showing Admin-permitted lectures for <strong>{activeCourseObj.title}</strong> ({activeCourseObj.level})
+                  </>
+                )}
               </span>
             </span>
             <span className="font-mono text-[11px] text-amber-300">
